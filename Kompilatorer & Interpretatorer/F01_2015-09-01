@@ -1,0 +1,106 @@
+
+	Indata:											Utdata:
+	Källprogram										Målprogram
+	(skrivet i ett källspråk)  -> [Kompilator] -> 	(i ett målspråk)
+	Inte naturligt språk				|			maskinkod (ev. för virtuell maskin)
+										v 			assemblerkod
+								Varningar,			C
+								felmeddelanden		Kretsdesign
+													...
+
+Kompilator delar:
+	Analys -> Representation -> Syntes
+
+Sju faser för kompilering:
+	- Källprogram: position += initial + rate * 10; 	
+	v //Sekvens av tecken
+
+	- Lexikalisk analysator = scanner, identifierar enheter, t.ex. +=, +, position, 10 etc. (minsta betydelsebara enheten)
+	v //Sekvens av tokens
+
+	- [ID, 17] [+=] [ID, 35] [+] [ID, 20]
+		Symboltabell
+		nr:	
+		17, position
+		35, initial
+	v 
+
+	- Syntaktisk analysator = parser
+	v
+
+		+=
+	/		\
+ID,17  		 +					Syntaxträd
+		  /		\	
+	  ID,35		 *
+	  		  /      \
+	   		ID,20    10	
+
+	lexikaliskt fel - ord fel
+	syntaktiskt fel - gramatik fel
+	semantiskt fel - betydelse fel
+	v
+
+	- Semantisk analysator
+		konvertera eventuella datatyper, bestäm operatorer, t.ex. int till double, flyttalsdivision vs. heltalsdivision etc.
+	v
+	 			F.A.
+	 		/ 		\    Också ett syntaxträd, men dekorerat
+	 konv.float		F.M
+
+	v
+
+	- Mellankodsgenerator (intermediärkodsgenerator) - förbereder för optimering, instruktioner kan lättare flyttas och är mer lik processor instruktioner
+	v
+
+	temp1 = 10.0
+	temp2 = rate * temp1
+	temp3 = inttofloat(initial)			//mellankod (inte som text, t.ex. array av structar med instructioner)
+	temp4 = temp3 + temp2
+	(3-address instruktioner)
+	v
+
+	- Maskinoberoende kodoptimerare
+		7.0 + 2.0 -> 9.0
+	v
+
+	- Mellankod, men mindre och snabbare
+	v
+
+	- Kodgenerator
+	v
+
+	Målkod
+	v
+
+	- Maskinberoende optimering
+	v
+
+	Optimerad målkod
+
+3 första faserna <=> Analysdel/front-end, övriga <=> Syntesdel/back-end
+
+Hjälpmedel:
+Scanner-generator, ex: Lex, Flex
+Parser-generator, ex: Yacc, Bison
+
+Högnivåspråk
+Lågnivåspråk
+
+Imperativa språk - specifika instruktioner
+Deklarativa språk - vad vill jag ha för svar (SQL)
+
+	Statiskt 		<---> 		Dynamiskt
+Vid kompilerings-			Vid program-
+   tillfället				 körningen
+
+Identifierare 	<---> 	Namn 		<---> 	Variabel
+a11x2					b.a11x2				plats i minnet
+						c.a11x2
+
+Procedur 
+Funktion
+Metod
+
+Definition - int f(int x, int y) { return x + y + 1; }
+Deklaration - int f(int x, int y);

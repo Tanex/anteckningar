@@ -1,0 +1,144 @@
+- forts. optimering
+- lite om kodgeneratorn och maskinberoende optimering
+- Tentan: instuderingsfrågor, exempeltenta
+
+
+Loop-optimeringar:
+1. Flytta kod ut ur loopen
+2. Ta bort induktionsvariabler
+(3. Reducera styrka)
+4. Looputrullning
+
+Ex på kodflyttning:
+
+Loopinvarianter? limit-2 och x+y
+
+while(i < limit-2)
+	a[i++] = x + y;
+
+		|
+		v
+
+temp1 = limit - 2;
+temp2 = x + y;
+while(i < temp1)
+	a[i++] = temp2;
+
+for(i = 0; i < strlen(s); ++i) //bug strlen kommer inte räkna \0
+	s2[i] = s[i];
+
+		|
+		v
+i = 0;
+while(i < strlen(s))
+{
+	s2[i] = s[i];
+	++i;
+}
+
+		| (programmeraren)
+		v
+
+int n = strlen(s);
+for(i = 0; i < n; ,++i)
+	s2[i] = s[i];
+
+
+Ex på att ta bort induktionsvariabler och reducera styrka:
+
+i = 0;	//induktionsvariabler
+j = 1;	// stegas fram ett steg för varje varv i loopen
+while(a[i] != 0)
+{
+	a2[j] = a[i];
+	++i;
+	++j;
+}
+
+		|
+		v
+
+i = 0;
+while(a[i] != 0)
+{
+	a2[i + 1] = a[i];
+	++i;
+}
+
+reducera styrka, i*4; -> i = i + 4; istället för i++, + "billigare" operation än multiplikation
+
+quicksort exemplet:
+
+B3:
+
+[j = j -1          ]      
+|t4 = 4 * j        | -> t4 = t4 - 4, I B1: t4 = 4 * j, samma sak med t2 i B2
+|t5 = a[t4]        |      
+[if t5 > v goto B3 ]      
+
+i B4: if ( i >=j ), vi vet att t4 = 4*j, t2 = 4*i => if( t2 >= t4)
+
+
+Ex på looputrullning:
+
+for(int i = 0; i < 3; ++i)
+	n += i;
+
+		| //looputrullning
+		v
+
+n += 0; //ta bort helt
+n += 1; // slå ihop med nästa
+n += 2; //+= efter ihopslagning
+ 
+ 	| vanlig optimering
+ 	v
+
+n += 3
+
+Ex2:
+
+for(int i = 0; i < 20; ++i)
+{
+	for(int j = 0; j < 2; ++j)
+		a[i][j] = i + 2 * j;
+}
+
+inre loopen blir utrullad:
+a[i][0] = i;
+a[i][1] = i + 2;
+
+
+Eliminering av svansrekursion:
+
+//Länkad lista
+[.]->[ 7 ] >[ 3 ] >[ 5 ]
+	 [ . ]/ [ . ]/ [ X ]
+
+void f(struct Node *p)
+{
+	if(p == NULL)
+		return;
+	p->value++;
+	f(p->next);
+}
+
+gör om rekursion genom att använda samma aktiveringspost för funktionsanropen -> den fungerar som om den vore iterativ
+
+
+Kodgenerering:
+Ex: Treadress x = y + z;
+
+MOV		y, R0
+ADD		z, R0
+MOV		R0, x
+
+Ex2: a = b + c; d = a + e;
+
+MOV 	b, R0
+ADD		c, R0
+MOV		R0, a
+MOV		a, R0 //onödigt (peep-hole optimization, kolla bara ett par eller några få instruktioner i taget)
+ADD		e, R0
+MOV		R0, d
+

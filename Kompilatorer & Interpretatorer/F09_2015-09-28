@@ -1,0 +1,288 @@
+		/- exekvera syntaxträdet
+Interpretatorer
+		\- stackmaskin
+
+print 17 -> >[compiler]< -> [exe] -> 17
+
+print 17 -> >[interpreter]< -> 17
+
+Två sätt:
+"Bara en fas till" ("ihopbyggt")
+	- Tre sätt:
+		- Kör raderna allteftersom
+		- Exekvera träd
+		- Stackmaskin
+
+Oberoende (ex Java, C#) 
+	foo.java -> kompileras av javac -> java.class -> körs av java
+
+Ett enkelt uttryck: 2 * a + 4
+
+	+
+      /   \ 
+     *     4
+   /   \
+  2     a
+
+  [PLUS ]
+  [     ]
+   |   \
+   v     v
+ [TIMES]  [TAL  ]  
+ [     ]  [    4]
+  |    \
+  v      v
+[TAL  ]  [ID   ]
+[    2]  [  117]
+
+Omgivning
+[VAR | VAL]
+[117 |   3]
+
+
+Tilldelning: a = a + 2
+
+	=
+      /   \
+     a     +
+         /   \
+        a     2
+
+
+   [=    ]
+   [     ]
+    |   \
+    v    v
+[ID   ]  [PLUS ]
+[117  ]  [     ]
+          |  \
+          v   v
+     [ID   ]  [TAL  ]
+     [117  ]  [    2]
+
+
+Ex: if (a < 10) b = 2; else b =  3; 
+
+	          if
+  	   /      |      \
+          >       =       =
+        /  \    /   \   /   \
+      a    10  b    2  b     3
+
+	[IF   ]
+	[     ]
+	/
+       v
+  [LT   ]
+  [     ] osv..
+
+
+Kod: interpretor_exec.c
+
+function kalle(x, y) { a = x + y; return y + 2; }
+
+		  function
+	      /      |      \
+	 kalle       ,         ,
+                   /   \      /  \
+                  x     y    =    return
+                            / \        |
+                           a   +       +
+                              / \     / \
+			     x   y   y   2
+
+		anrop
+		/   \
+            kalle    ,
+                   /   \
+                  5     +
+                       / \
+                      2   2
+
+Ny omgivning, lokal för funktionen kalle
+[VAR | VAL]
+[  x |  5 ]
+[  y |  4 ]
+
+::Abstrakt stackmaskin::
+Grunder: a + 2 * 3 =>
+
+	+
+       / \
+      a   *
+         / \
+	2   3
+
+=> a 2 3 * +
+
+X:push a:X rvalue a
+push 2
+push 3
+*
++
+
+a = a + 2
+
+	=
+       / \
+      a   +
+         / \
+        a   2
+
+lvalue a
+rvalue a
+push 2
++
+=
+
+Kontrollflödesinstruktioner i stackmaskinen:
+
+  [       ]
+  [       ]
+a:[label a]
+  [       ]
+
+label a
+jump a
+gofalse a
+gotrue a
+halt
+
+if (2 < 3) ...
+
+	if
+       /  \
+      >    ...
+    /   \
+   2     3
+
+push 2
+push 3
+<
+gotrue a
+
+if (a < 2)
+	a = a + 2;
+
+     |
+     v
+  < a<2 >------ falskt
+     | sant   | 
+     v        |
+  [ a=a+2 ]   |
+     |        |
+     v        |
+  [ after ]<---
+
+rvalue a
+push 2
+<
+gofalse "after"
+lvalue a
+rvalue a
+push 2
++
+=
+label "after"
+
+I Bison:
+IF '(' uttryck ')' sats 
+{ 
+	int after = makenewlabel(); 
+	$$ = $3 + makeinstruction("gofalse", after) + $5 + makeinstruction("label", after);
+} 
+
+while-loop:
+Ex: 
+while(i < 0)
+	i = k;
+
+ ----->	|
+ |	v
+ |  < i < 0 >------- falskt
+ |	| sant     |
+ |	v          |
+ |  [ i = k ]      |
+ |      |          v
+ --------
+
+label 1
+rvalue i
+push 0
+<
+gofalse 2
+lvalue i
+rvalue k
+=
+jump 1
+label 2
+
+Ex:
+if (a < 2)
+	while (a < 10)
+		a = a + 1;
+
+
+rvalue a
+push 2
+<
+gofalse 1
+label 2
+rvalue a
+push 10
+<
+gofalse 3
+lvalue a
+rvalue a
+push 1
++
+=
+jump 2
+label 3
+label 1
+
+Ex: Vad är koden för x > 2 || y > 3
+
+Kod:
+if (x > 2 || y > 3)
+	z = 4;
+
+Försök:
+
+rvalue x
+push 2
+>
+gotrue 1
+rvalue y
+push 3
+>
+gofalse 2
+label 1
+lvalue z
+push 4
+=
+label 2
+
+Annan kod: 
+int resultat = x > 2 || y > 3;
+if (resultat)
+	z = 4;
+
+lvalue resultat
+
+rvalue resultat
+gofalse ...
+
+Rätt kod för x > 2 || y > 4:
+
+rvalue x 
+push 2
+>
+copy //kopiera det som ligger överst på stacken
+gotrue 1
+pop
+rvalue y
+push 3
+>
+label 1
+

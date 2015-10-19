@@ -1,0 +1,125 @@
+Parsning - Syntaktisk analys
+("Att jämföra källprogrammet med källspråkets grammatik, se om det stämmer, och (kanske) bygga ett parse-träd eller syntax-träd")
+Särskilt: top-down-parsing
+
+sats -> uttryck ;
+sats -> while ( uttryck ) sats
+sats -> if ( uttryck ) sats
+
+	if ( a == b ) a = 7;   <-      if
+							  /     |      \				(Top-down parsning, alternativt finns Bottom-up parsning)
+				  			if  (uttryck)  sats (osv.)
+
+C => int a[7][2];
+PASCAL => var a : ARRAY [0..6] OF ARRAY [0..1] OF Integer
+
+Datatyper i PASCAL ex.:
+Integer
+1..100
+char
+array [13..72] OF integer
+array [char] OF integer
+
+Grammatik:
+simple -> integer
+simple -> char
+simple -> num dotdot num
+type -> simple				<- Startsymbol. (dvs en type av något slag, inte exakt denna produktion)
+type -> array [ simple ] of type
+type -> ^id
+
+Källprogram: array [ 1..10 ] of integer
+
+	type ser array och tar array och [, sen ska en simple komma som tar num dotdot num, sedan tar första typen resten av tokensen fram tills of, sen skall det vara en till type som ska vara en simple som tar integer
+
+Tokensekvens: array, [, num, dotdot, num, ], of, integer
+				^- lookahead token
+
+Prediktiv parsning ( = bara en möjlig produktion, ingen backtracking)
+
+"FIRST-mängd"
+
+Top-down-parser
+Prediktiv top-down-parser
+Recursive descent
+(prediktiv_top-down_parser.c)
+
+sats -> begin opt-satslista end
+opt-satslista -> satslista | €
+
+Inmatning: begin end
+
+Att skapa en prediktic recursive-descent-parser:
+1. Bestäm språket
+2. Skriv om grammatiken om det behövs
+	- FIRST()-konflikter
+	- vänsterrekursion
+	- tvetydighet?
+3. Skriv parsern
+
+Vänsterrekursion:
+Ex: x + 2
+	3 + 4 + y
+	7
+
+Grammatik:
+term -> id | nummer
+expr -> expr + term
+ void expr();
+
+Indata: x + 7, tokens: x, +, 7
+
+Eliminering av vänsterrekursion:
+A -> A x | y =>
+A -> y Rest
+Rest -> x Rest | €
+
+Ex:
+uttryck -> uttryck + term | term
+=>
+uttryck -> term Rest
+Rest -> + term Rest | €
+
+A -> Ax -> Axx -> ...
+  \   \  
+   >Y  >Yx
+
+A -> y Rest -> yx Rest -> yxx Rest -> ...
+		\  			\
+		 >y  		 >yx
+
+FIRST()-konflikter:
+sats -> if ( expr ) sats
+sats -> if ( expr ) sats else sats
+sats -> ...
+=> 
+sats -> if ( expr ) sats valfri-else
+valfri-else -> else sats | €
+sats -> ...
+
+A -> x y | x z
+=>
+A -> x Rest
+Rest -> y | z
+
+Enkla uttryck med + och - :
+Ex: 2
+	3 + 4
+	2 + 3 - 4 + 5 - 2 - 2
+
+Ej: 2 * 2
+	20 + 2
+	2 + (3 - 3)
+	6--
+
+Grammatik:
+expr -> expr + term { printf("+"); } // <- semantisk aktion
+expr -> expr - term { printf("-"); }
+expr -> term
+term -> 0 { printf("0"); }
+term -> 1 { printf("1"); }
+...
+term -> 9 { printf("9"); }
+
+expr -> term Rest
+Rest -> + term { printf("+"); } Rest | - term { printf("-"); } Rest | €

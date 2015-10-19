@@ -1,0 +1,73 @@
+   			  Run-time-system |  				      
+ 					  v
+Källkod -> kompilator -> objekt-modul -> länkare -> körbart program -> ... -> körbart program
+foo.c                    foo.o                      foo                       foo
+           Kompilerings-						      Run-time = exekveringstillfället = programkörningen
+	   tillfället
+
+kontroll-träd = kontrollstacken fast som träd
+
+(Virtuellt) minne: Minnesrymd
+
+[    		 ]0
+[ Kodsegment	 ]1
+[(kod,konstanter)]2
+ Statiska data    .
+ Stack	|	  . <- tråd 1
+      	v växer	  .
+ Stack	|         . <- tråd 2
+	v växer   .
+ OANVÄNDA	  .
+       ^ växer    .
+[ Heap |   	 ] 32 bitar = ca 4e9
+
+von Neumann-arkitekturen - vad är det? - En enda minnesrymd för programkod och data - nackdel, blir mer på bussen
+ 
+Referens-räkning - hur många referenser/pekare finns till dataobjektet
+
+Skräpsamling ~= mark and sweep = markera och sopa upp
+	-liten flagga på varje dataobjekt
+
+Döda/levande data - data som int kommer att användas och data som kommer att användas
+Icke nåbara/nåbara data
+
+Mark-and-sweep:
+1. Sätt alla flaggor till 0
+2. Markera-fasen: följ pekare rekursivt, från rotmängden och sätt flaggorna till 1
+3. Sop-fasen: ta bort alla omarkerade objekt
+
+Konservativ skräpsamling:
+4-bitars addresser
+
+[ 47 ] 0   - statiska data
+[  8 ] 1   - - || -
+[ 10 ] 2   - stack
+[  4 ] 3   |
+[  7 ] 4   |
+[ 14 ] 5   - 
+[ 13 ] 6   - heap
+[  3 ] 7   |
+[  3 ] 8   |
+[ 11 ] 9   |
+[####] 10  | 
+[ 14 ] 11  |
+[ 22 ] 12  -
+[####] 13  - ej användbart
+[####] 14  |
+[####] 15  -
+
+ojekt på 6-7, 8-9, 11-12
+
+47 kan inte vara pekare
+8 kan vara pekare, flaga objekt på address 3 -> 3 kan vara pekare -> pekar på rotmängden
+11 kan vara pekare, flagga objekt på address 11 -> pekar på 14, inte pekare
+22 inte pekare
+10 inte pekare, oallokerat
+4 kan vara pekare, finns i rotmängden
+7 kan vara pekare, flagga objekt på plats 7 -> 3 kan vara pekare, finns i rotmängden
+14  kan inte vara pekare
+
+alla tre objekten blev flaggade
+
+Call by value
+Call by reference

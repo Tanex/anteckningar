@@ -1,0 +1,11 @@
+Explicit finns det kommandon för kompilering av den körbara filen samt kommandon för att köra bison och flex
+Implicit får make räkna ut hur C-utfilerna från flex och bison skall kompileras till O-filer.
+
+Den förstår uttryck med plus, minus och gånger samt parenteser
+
+Division saknas
+
+%token DIVIS
+| expr DIVIS expr { $$ = $1 / $3; }
+
+"/" { return DIVIS; }

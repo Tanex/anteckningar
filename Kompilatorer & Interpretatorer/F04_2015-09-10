@@ -1,0 +1,117 @@
+Mer parsning
+	- Antal tokens lookahead
+	- Bottom-up-parsning med verktyg
+	- Shift/reduce-konflikter
+	- Reduce-reduce-konflikter
+	- Varför inte alltid verktyg?
+
+
+::Antal tokens lookahead::
+sats -> if ( expr ) sats
+sats -> if ( expr ) sats else sats //oändlig lookahead, vet ej hur många okens expr och sats är 
+=> 
+sats -> if ( expr ) sats Rest
+Rest -> else sats | €
+
+b = a = 2;
+if ((a = 2) > 3) ...
+
+uttryck -> tilldelning | vanligt-uttryck
+tilldelning -> lvalue = uttryck
+
+a = 7 | a + 2 (vet inte om tilldelning eller uttryck)
+^
+lookahead
+
+a[7] = 3 | a[7] + 3 (samma problem men behövs mer lookahead) 
+^^
+a[b + 2] = 3 | a[b + 2] + 3 | a[b = 3] = 3 | a[b = 3] + 3 (fyra olika möjligheter)
+^^^
+
+a[b[c = 1] = 2] = 3 | a[b[c + 1] + 2] + 3 (8 stycken möjligheter 2^3)
+^^^^^
+
+fler tokens lookahead hjälper inte för alla fall utan det går tillslut åt oändlig lookahead, ärför används bara en token
+
+
+::Bottom-up-parsning::
+Grammatik:		Ex:
+E -> id 		a, x
+E -> E + E 		a + x, a + x + y
+E -> E * E 		a * x, a * x * y, a + x * y
+
+Ex: x + y * z => 
+
+         E
+      /  |  \  
+     /   \   \
+    E     \   \
+ /  |  \   \   \
+E   |   E   |   E
+|   |   |   |   |
+id  |   id  |   id
+|   |   |   |   |
+x   +   y   *   z    <- tvetydig grammatik, går att göra + och * i godtycklig ordning
+
+Alternativ grammatik (för samma språk!):
+E -> E + T | T
+T -> T * F | F
+F -> id 
+
+::Shift/reduce konflikt:
+(Tvetydig) grammatik
+E -> E + E 	(regel 1)
+E -> E * E 	(regel 2)
+E -> id 	(regel 3)
+
+Inmatning: x + y * z
+Tokensekvens: id, +, id, *, id
+
+Tid 	Stack		Indata kvar			Åtgärd(action)
+|
+|					v--lookahead-token
+|		(tom)		x + y * z			Skifta!
+|		x			+ y * z				Reducera(med regel 3)
+|		E 			+ y * z				Skifta
+|		E+			y * z				Skifta
+|		E+y			* z					Reducera(med regel 3)
+|		E+E 		* z					Shift/reduce-konflikt! (Bison grammatik skiftar alltid)
+|		E+E*		z					Skifta
+|		E+E*z		(slut)				Reducera(med regel 3)
+|		E+E*E 							Reducera(med regel 2)
+|		E+E 							Reducera(med regel 1)
+|		E
+|
+v
+
+::Reduce-reduce-konflikt::
+En enkel grammatik:
+E -> id
+E -> T
+T -> id
+
+
+  x   ->  E
+------
+stack
+
+  x   ->  T  ->  E
+------
+stack
+
+a²  a sup 2
+
+text -> text sup text
+text -> text sub text
+text -> text sub text sup text
+
+ex: x sub 3 sup y (ska bli x3^y)
+i bison bli det x med sub 3^y för bison kör "första" regeln som högsta prio
+
+::
+(bio and örebro)
+fras -> ord | fras or fras | fras and fras | not fras
+Eller:
+faktor -> ord | ( fras ) | not faktor
+term -> faktor | term and faktor
+fras -> term | fras or term

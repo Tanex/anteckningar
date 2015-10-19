@@ -1,0 +1,126 @@
+Typer, typsystem, typkontroll, typhärledning
+
+I den semantiska fasen
+Ex: 2 + 7		int + int = int
+	2.0 + 7		double + double(int) = double
+	x + 7		...
+	x + 7 + 1	...
+
+
+Statiska
+Dynamiska
+
+kod: djur.java //exempel på där statisk typkontroll ej fungerar
+
+Ex. på statiska kontroller:
+
+int main ()
+{
+	int i;
+	*i = 2; //Typfel
+	break;  //ska vara i loop eller switch sats
+  e:		//dubbel definition av label e	
+  e:		//
+	return 0;
+}
+
+
+Typuttryck:
+Vanligt uttryck med värden: 2 + 3 => 5, x + 3
+
+1. En grundtyp: int, char ...
+2. Ett namn på en typ: typedef int T; T
+3. En typvariabel: type XT = typeof(x); XT y; XT
+4. En typkonstruktor: 
+	- pointer(T) Ex. pointer(int), pointer(pointer(int))
+	- array(I, T) 
+	- produkter: T1 x T2 Ex. inne i en struct 		struct Hund
+													[char namn[10];]
+													[int vikt;     ]
+													[float höjd;   ]  array(...) x int x float
+	- struct(...)
+	- funktioner: Ex. int x float -> int (int x float är argumenten, -> "funktion", int är retur typ)
+
+			->						[FUN ]     [PROD]
+		   /  \						[    ]	   [    ]
+		  x    int					osv....	
+		 / \
+	  int   float				
+
+
+Starkt typat språk: kompilatorn kan garantera att inga typfel uppstår vid runtime
+Svagt typat språk
+
+Ett program (i ett språk):
+n : int;
+i : int;
+a : array[256] of char;
+n + a[i] + 7				//TYPFEL, addition av int och char ska ej fungera i detta språk
+
+Typer: int, char, void, type_error, arrayer
+Variabeldeklarationer och uttryck
+Addition
+
+Grammatik:
+Program -> Deklarationer ; Uttryck
+Deklarationer -> Deklarationer ; Deklarationer
+			   | id : Typ
+Typ -> int | char | array[tal] of Typ
+Uttryck -> tal | tecken | id | Uttryck + Uttryck | Uttryck[Uttryck]
+
+	
+					Uttryck typ=type_error eller char
+
+			uttryck 			Uttryck typ=int
+
+			id					id typ=int
+
+			a        [           i       ]
+
+
+Uttryck -> tal { Uttryck.typ = int; }
+Uttryck -> tecken { Uttryck.typ = char; }
+Typ -> int { Typ.typ = int; }
+Typ -> char { Typ.typ = char; }
+Typ -> array[tal] of Typ¹ { Typ.typ = array(tal.värde, Typ¹.typ); }
+Uttryck -> Uttryck¹ + Uttryck² 
+	{ 
+		if (Uttryck¹.typ == int && Uttryck².typ == int) 
+			Uttryck.typ = int; 
+		else
+			Uttryck.typ = type_error;
+    }
+Uttryck -> Uttryck¹[Uttryck²]
+	{
+		if (Uttryck¹.typ == array(s, t) && Uttryck².typ == int)
+			Uttryck.typ = t;
+		else
+			Uttryck.typ = type_error;
+	}
+
+Satser:
+sats -> while (Uttryck) sats¹ 
+	{
+		if (Uttryck.typ == int && sats¹.typ == void)
+			sats.typ = void;
+		else
+			sats.typ = type_error;
+	}
+sats -> Uttryck ;
+	{
+		if (Uttryck.typ == type_error)
+			sats.typ = type_error;
+		else
+			sats.typ = void;
+	}
+
+
+Typekvivalens?
+struct Punkt {double x; double y; }
+struct Hund {double vikt; double längd; }
+
+char a[30];
+char b[30];
+
+Strukturekvivalens: ser datastrukturen likadan ut
+Namnekvivalens: har datatyperna samma namn

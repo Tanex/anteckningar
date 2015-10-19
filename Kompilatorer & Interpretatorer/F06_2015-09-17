@@ -1,0 +1,185 @@
+Scannern
+X:Lex:X X:Flex:X flex <- inte Adobe, SO: flex-lexer
+Reguljära uttryck
+Tillståndsmaskiner
+
+Inmatning: if (olle <= 2
+tokens: IF LP ID,73 LE/(OP,13) 2
+			  ^   ^
+	   tokentyp   lexikaliskt värde
+   = retur från	  = variabel 
+     lexan 			tokenval
+
+ĺexem 2    10
+	 02   012
+
+Moduler:
+koppling
+sammanhållning
+
+java.l >[ flex ]< lex.yy.c
+			|
+			v
+		Fel, varningar
+
+java.l:
+
+%{
+	C-deklarationer	
+%}
+Flex-deklarationer
+
+%%
+
+Regler (reguljära uttryck)
+
+%%
+
+C-kod
+
+
+::Reguljära uttryck - grunder::
+* - kleene stjärna
+? - 0-1 av föregående
+| - eller streck
+abc - konkaktenering
+(abc)* - hela abc
+
+"Makron", "definitioner"
+
+siffra -> 0|1|2|3|4|5|6|7|8|9
+bokstav -> a|b|c|....|z
+
+X:identifierare -> bokstav (bokstav* | siffror*):X <- fel
+identifierare -> bokstav (bokstav | siffror)*
+
+Flyttal: Ex: 2.5 0.4 3.2e14 3e-17 6.023e+23 (.45) 22.8 2E17
+
+flyttal -> siffror valfri_decimaldel valfri_exponentdel
+valfri_exponentdel -> (E|e) (+|-|€) siffror | €
+valfri_decimaldel -> (. siffror) | €
+siffror -> siffra siffra* 		//(siffra+)
+siffra -> 0|1|2|3|4|5|6|7|8|9           //[0-9]
+
+fungerar som C-makron => ingen rekursion i reguljärauttryck eller i flex överhuvudtaget
+
+. = godtyckligt tecken, utom radslut
+\. = punkt
+\n = radslut
++ = en eller flera
+? = en eller ingen
+^ = början på rad
+$ = slutet på rad
+(a|b)+
+"(a|b)+" = matcha exakta tecken
+[abcg2] = a,b,c,g eller 2
+[a-r] = a till och med r
+[-ar] = -,a eller r
+[a\-r] = -||-
+[A-Za-z0-9] = en bokstav eller siffra
+[\t\n ]+ = ett eller flera whitespace-tecken
+[^abc] = ett tecken utom a,b eller c, ^ = icke
+[ab^c] = a,b,^ eller c
+[a|b] = a,| eller b
+a|b <=> [ab]
+
+
+Spam-filter:
+^Subject: .*sex.*$
+	Databasexjobb
+	Doktorsexamen
+
+Exempel-fil för flex:
+
+%{
+	#include "java.tab.h"
+	extern int errno;
+%}
+
+delimiter [ \n\t]
+whitespace {delimiter}+
+letter [A-Za-z]
+digit [0-9]
+id {letter}({letter}|{digit})*
+number {digit}+
+
+%%
+
+{whitespace} { /*inget*/ }
+if { return IF; }
+else { return ELSE; }
+Else { return ELSE; }
+[Ee][Ll][Ss][Ee] { return ELSE; } //else matchas också, men första regeln kommer att köras
+{id} { if (lookup(yytext) == -1)
+	   insert(yytext);
+       yylval = lookup(yytext);
+       return ID; 
+      }
+"++" { return PLUSPLUS; }
+number { sscanf(yytext, "%d", &ylval); return NUMBER; }
+
+%%
+
+...
+
+
+int yywrap(void) { return 1; } //körs då man finner EOF
+
+symboltabell:
+
+lexem   typ
+x	ID
+olle	ID
+else	ELSE
+if	IF
+div	DIV
+mod	MOD
+
+^gör scanning enklare, man kan köra lookup på else och då märka att det är ett nyckelord och behöver då inte definiera det speciellt
+
+Tillståndsmaskiner:
+
+Lampa:
+       släck
+Tänd	->	Släckt  <- start tillstånd
+        <-	
+       tänd
+
+      trasig   <- sluttillstånd
+
+           a    a
+Start -> 1 -> 2 -> 3 -> slut 
+        |  <-  |  
+      ej|   b  |ej a eller b
+       a|      |
+        >  4   <
+
+Matchar: aa, abaa, ababaa => a(ba)*a
+
+(b|a)*ab
+  
+         a
+        v-  a    b
+start -> 1 -> 2 -> 3  
+        ^- |   |
+         b annat
+           > 4 <
+
+
+Läsa ord i inmatningen:
+Hej Olle du är bäst
+
+state = utanför;
+
+while((c = getchar()) != EOF)
+{
+	
+}                            bokstav
+                  bokstav    v-|
+start -> utanför --------> innanför
+          ^-|    <--------
+           ws      ws
+
+(plus gå till slut vid EOF)
+
+

@@ -1,0 +1,34 @@
+start -> list eof
+list -> assignment ; list
+       | empty
+assignment -> id = expr
+expr -> term moreterms
+moreterms -> + term { print('+') } moreterms
+       | - term { print('-') } moreterms
+       | empty
+term -> factor morefactors
+morefactors -> * factor { print('*') } morefactors
+       | / factor { print('/') } morefactors
+       | div factor { print('DIV') } morefactors
+       | mod factor { print('MOD') } morefactors
+       | empty
+factor -> ( expr )
+       | id { print(id.lexeme) }
+       | num { print(num.value) }
+
+//För exponential funktioner
+factor -> expo moreexpo
+expo -> ( expr )
+	| id
+	| num
+moreexpo -> ^ expo
+	  | /*empty*/
+
+//För både uttryck och tilldelningar
+list -> assignment ; list
+	  | expr ; list
+	  | empty
+
+både expr och assignment kan börja med ett id, alltså har de samma FIRST-mängd och när man ska fortsätta 
+utveckla list så vet man inte vilken man ska välja, grammatiken blir tvetydig
+

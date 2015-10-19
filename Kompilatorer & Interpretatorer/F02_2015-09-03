@@ -1,0 +1,158 @@
+Grammatiker för datorspråk
+
+::Hälsningsfraser::
+
+God morgon  -|
+God middag   | - Ett språk
+God kväll   -|
+   ^- Sträng, program
+
+::Grammatik:: - man kan ha flera 
+
+hälsningsfras -> God morgon
+hälsningsfras -> God kväll
+hälsningsfras -> God middag
+
+Eller: 
+	   |-startsymbol
+       v  v---------------v-------------------- Icke terminaler
+hälsningsfras -> God tidsspecifikation       <- produktion
+tidsspecifikation -> morgon | middag | kväll <- 3 produktioner
+						^-------^--------^----- Terminaler (= tokens)
+
+
+t -> mo | mi | k  <=>  t -> mo, t -> mi, t -> k
+
+::Summor:: ex: 	3
+				3 + 3
+				3 + 3 + 3 + 3 + 3
+
+::Grammatik::
+
+summa -> 3 
+summa -> summa + 3
+
+Infix-notation		Träd		Postfix-notation
+2 + 3				 +			2 3 +
+				   2/ \3
+
+2 + 3 * 4			 +			2 3 4 * +
+				   2/ \*
+				   	 3/ \4
+
+2 * 3 + 4			 +			2 3 * 4 +
+				   */ \4
+				 2/ \3
+
+2 * (3 + 4)			 *			2 3 4 + *
+				   2/ \+
+				     3/ \4
+
+::Interpretator för postfixnotations:: - stackmaskin
+Operand? (= tal, variabel) Pusha på stacken!
+Operator? Poppa, poppa, räkna, pusha resultatet!
+
+::Uttryck med plus, minus och ensiffriga tal::
+Ex: 
+	2 + 5
+	3 - 5 + 8
+	3
+
+Inte: 
+	2 + + 3 - -
+	2 + 3 * 2
+	2 + 10
+
+::Grammatik::
+		siffra -> 0|1|2|3|4|5|6|7|8|9
+start->	uttryck -> siffra
+symbol	uttryck -> uttryck + siffra
+		uttryck -> uttryck - siffra
+
+::Ex på uttryck::
+9 - 5 + 2
+9, 5, 2 är siffror
+9 blir ett uttryck
+9 - 5 blir uttryck
+9 - 5 + 2 blir uttryck
+
+					uttrycḱ
+					/   |   \
+		     Uttryck	+    siffra    <- Parse-träd, konkret syntaxträd
+		    / 	|   \			|
+      uttryck	-	siffra		2
+		 |             |
+	  siffra		   5
+	  	 |
+		 9
+
+		   			+
+		   		 -/  \2				<- Syntax-träd, abstrakt syntaxträd
+		   	   9/  \5
+
+::En annan grammatik ?::
+		siffra -> 0|1|2|3|4|5|6|7|8|9
+start->	uttryck -> uttryck + uttryck
+symbol	uttryck -> uttryck - uttryck
+
+Samma språk? - ja
+Andra problem? - flera parseträd per uttryck
+		
+		  siffra	
+		/
+uttryck --- uttryck + uttryck
+		\
+		  uttryck - uttryck
+
+siffra
+siffra + siffra
+siffra - siffra
+siffra - siffra + siffra
+siffra + siffra + siffra
+
+9, 5, 2 är siffror, men även uttryck
+9 - 5 blir uttryck som sedan - 2 blir uttryck
+
+MEN
+
+9, 5, 2 är siffror, men även uttryck
+5 + 2 blir uttryck som sedan 9 - blir uttryck
+
+olika ordning op beräkningen => olika svar
+
+Tvetydig grammatik = samma inmatning kan parsas med två eller flera olika parse-träd
+Naturliga språk tvetydiga, Svenska har en tvetydig grammatik "Jag ser mannen på kullen med teleskopet"
+
+::Operatorprioritet::
+2 * 3 + 5 * 4
+F - F   F - F
+  T   -   T
+      U
+
+F = Faktor, T = Term, U = Uttryck
+
+		siffra -> 0|1|2|3|4|5|6|7|8|9
+		faktor -> siffra
+		X term -> faktor * faktor X - term = faktor | term * faktor
+		X uttryck -> term + term X - uttryck -> term | uttryck + term
+
+2 + 3 + 4 * 5
+2,3,4,5 -> s -> f
+2,3,4 -> f
+4 * 5 -> t
+2 -> u
+2 + 3 -> u
+2+3 + 4*5 -> u
+
+
+::Syntax-styrd översättning::
+Produktion: 				Semantisk Åtgärd:
+
+siffra -> 0					printf("0");			Indata:		Åtgärder: 
+siffra -> 1 				printf("1");			Term 		2 3 *
+...												term |  \	
+faktor -> siffra			-----				fakt |	fakt
+term -> faktor 				-----				siff |	siff
+term -> term * faktor 		printf("*");		2    *    3
+uttryck -> term 			-----
+uttryck -> uttryck + term   printf("+");

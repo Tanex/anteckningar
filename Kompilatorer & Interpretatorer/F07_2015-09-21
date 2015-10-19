@@ -1,0 +1,153 @@
+Syntaxstyrt översättningsschema = semantisk aktion
+Syntaxstyrd definition = semantiska regler
+Attribut
+Att bygga syntaxträd
+
+
+Uttryck -> uttyck + uttryck | tal
+
+2 + 3
+
+		uttryck
+		/  |  \	
+uttryck    +   uttryck
+	|				|
+	tal				tal
+	|				|
+	2				3
+
+^Parse-träd
+
+	+
+   / \
+  2   3
+
+^Syntax-träd
+
+struct som talar om att det är plus med pekare till structar som talar om att det är tal med värden
+C-kod: (parse-tree.c)
+
+::Attribut ($ i bison)::
+		uttryck
+		/  |  \	
+uttryck(1) +   uttryck(2)
+	|				|
+	tal = 2			tal
+	|				|
+	2 -> värde = 2	3 -> värde = 2
+		type  = int		 typ = int
+
+Attibuten skickas uppåt i träden
+Syntetiserade attribut
+
+int x, y;
+
+dekl -> typ vars
+vars -> var vars | var
+
+			dekl
+			/ \ 
+		 typ  vars
+		  |     / \
+		 int  var  vars
+		       |    |
+		       x    var
+		             |   
+		             y
+
+typer skickas neråt i trädet, int är av typ int, skickas uppåt så dekl blir int, sedan neråt så att även x och y blir typ int
+Ärvda attribut
+
+::Syntax-styrd definition::
+
+Produktion:									Semantisk regel:
+uttryck -> uttryck(1) + uttryck(2)			uttryck.värde = uttyck(1).värde + uttryck(2).värde
+											uttryck.typ = ...
+
+uttryck -> tal 								uttryck.värde = tal.värde
+
+Inga krav på ordningföljd mer än att värden som används ska finnas.
+
+::Syntax-styrt översättningsschema::
+uttryck -> uttryck + uttryck { printf("+"); }
+uttryck -> tal { printf("%d", yylval); }
+				^
+				| Semantiska aktioner, måste göras i rätt ordning
+
+
+Vi ska bygga syntaxträd!
+Ex. på inmatning: a-4+c
+
+Grammatik: 
+E -> E(1) + T | E(1) - T | T
+T -> id | num | ( E )
+
+Parse-träd:
+
+			E
+            | \  
+        E    \ \_____
+    E   |  \  \      |
+	T       T  \     T
+	id     tal  \    id
+ 	a   -   4    +   c
+
+Syntax-träd:
+
+		+       	 -      <- FEL
+	   / \      	/ \
+	  -   c    	   a   +
+	 / \       	   	  / \
+	a   4      	     4   c
+
+Syntax-styrd definition (np = nodpekare):
+Produktion: 		Semantisk-regel:
+E -> E(1) + T 		E.np = mknode(PLUS, E1.np, T.np) //i Bison: { $$ = mknode(PLUS, $1, $3); }
+E -> E(1) - T 		E.np = mknode(MINUS, E1.np, T.np)
+E -> T 				E.np = T.np
+T -> id				T.np = mkleaf(ID, yylval)
+T -> num			T.np = mkleaf(NUM, yylval)
+T -> (E)			T.np = E.np
+
+
+							E.np-PLUS
+						/		  \___________________
+         E.np-MINUS 						|         \
+       /   \ _______________          
+E.np-id,17  \___            |
+T.np-id,17      |          T.np-num,4					 T.np-id,19
+id     			-          num              +            id
+a 			  		     	4  		                      c
+
+
+			[PLUS   ]
+			[.|.|X|X]
+			 | \  [ ]
+	    	 /  \________
+            v            v
+     [MINUS  ]			[ID     ]
+     [.|.|X|X]			[X|X|X|X]
+      | \  [ ]				 [19]
+      |  \___
+      v     v
+[ID     ]	[NUM    ]
+[X|X|X|X]	[X|X|X|X]
+	 [17]	      [4]
+
+DAG: Directed Acyclic Graph
+
+(2+3)*(2+3)
+
+	 *
+   /   \
+  +     +	//Träd
+ / \   / \
+2   3 2   3
+
+   *
+  / \
+  \ /
+   +		//DAG
+  / \
+ 2   3 
+

@@ -1,0 +1,22 @@
+KOI Lab1
+
+A: abscissa.cpp rad 247 // int kyss = anslutningspropp(0, kyrkoherde);
+
+	Konstanta värdet 0 skickas som parameter till funktionen som förväntar sig få en int* och således blir det fel
+
+B:
+den har lexikalisk och syntaktisk analys, symboltabell
+
+prediktiv recursive-descent top-down parser
+
+semantisk analysator, kod-generatorer samt optimerare
+
+7, till exempel genom att använda en stack
+
+8, Makrot fungerar EJ 
+printf("%d \n", ((5) == 0 ? (5) : (5) * FACT((5) - 1)));
+
+9, fungerar inte då pre-processorn endast ersätter text, den beräknar inte jämförelsen som finns i macrot
+
+10, pre-processorn skulle behöva kunna genomföra beräkningar för uttrycken för att kunna hantera rekursion. Utan den möjligheten 
+	skulle den bara fortsätta ersätta sina själv utskrivna defines i all oändlighet
